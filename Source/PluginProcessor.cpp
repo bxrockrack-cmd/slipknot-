@@ -97,6 +97,7 @@ void SlipknotDrummerAudioProcessor::triggerSlot(int slot, float velocity, int de
     voice.gainStep = 0.0f;
     voice.slot = slot;
     voice.delay = juce::jmax(0, delay);
+    voice.chokeDelay = -1;
     voice.active = true;
 }
 void SlipknotDrummerAudioProcessor::chokeSlot(int slot, int delay)
@@ -105,9 +106,9 @@ void SlipknotDrummerAudioProcessor::chokeSlot(int slot, int delay)
     for (auto& voice : voices)
         if (voice.active && voice.slot == slot)
         {
-            voice.delay = juce::jmax(0, delay);
+            voice.chokeDelay = juce::jmax(0, delay);
             voice.gainTarget = 0.0f;
-            voice.gainStep = -voice.gain / static_cast<float>(fadeSamples);
+            voice.gainStep = 0.0f;
         }
 }
 
@@ -151,6 +152,16 @@ void SlipknotDrummerAudioProcessor::renderVoices(juce::AudioBuffer<float>& buffe
             const int length = voice.sample->getNumSamples();
             const int index = static_cast<int>(voice.position);
             if (index >= length) { voice.active = false; continue; }
+            if (voice.chokeDelay >= 0)
+            {
+                if (voice.chokeDelay > 0) --voice.chokeDelay;
+                else
+                {
+                    const int fadeSamples = juce::jmax(1, static_cast<int>(currentSampleRate * 0.004));
+                    voice.gainStep = -voice.gain / static_cast<float>(fadeSamples);
+                    voice.chokeDelay = -1;
+                }
+            }
             if (voice.gainStep != 0.0f)
             {
                 voice.gain += voice.gainStep;
