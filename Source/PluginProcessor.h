@@ -52,6 +52,7 @@ private:
         float gainStep = 0.0f;
         int slot = -1;
         int delay = 0;
+        int chokeDelay = -1;
         bool active = false;
     };
     bool slotHasSample(int slot) const;
