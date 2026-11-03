@@ -39,6 +39,8 @@ private:
         std::atomic<int> writeIndex { 0 };
         std::atomic<int> readIndex { 0 };
         juce::String fileNames[4];
+        juce::String filePaths[4];
+        std::array<std::atomic<double>, 4> sampleRates {};
     };
     struct Voice
     {
@@ -49,6 +51,7 @@ private:
         int delay = 0;
         bool active = false;
     };
+    bool slotHasSample(int slot) const;
     void triggerSlot(int slot, float velocity, int delay, float layerGain = 1.0f);
     void triggerNote(int note, float velocity, int delay);
     void renderVoices(juce::AudioBuffer<float>& buffer);
