@@ -19,6 +19,7 @@ SlipknotDrummerAudioProcessorEditor::SlipknotDrummerAudioProcessorEditor(Slipkno
         button.setButtonText(juce::String(SlipknotDrummerAudioProcessor::slotNames[static_cast<size_t>(i)]) + "\nLOAD WAV");
         button.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff25252d));
         button.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffeeeeee));
+        if (loadedName != "Load WAV") button.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff3b2927));
         button.onClick = [this, i] { chooseSample(i); };
         addAndMakeVisible(button);
     }
