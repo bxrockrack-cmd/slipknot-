@@ -3,7 +3,7 @@
 SlipknotDrummerAudioProcessorEditor::SlipknotDrummerAudioProcessorEditor(SlipknotDrummerAudioProcessor& p)
     : AudioProcessorEditor(&p), processor(p)
 {
-    setSize(760, 560);
+    setSize(760, 650);
     title.setText("SLIPKNOT DRUMMER", juce::dontSendNotification);
     title.setFont(juce::Font(juce::FontOptions(28.0f, juce::Font::bold)));
     title.setColour(juce::Label::textColourId, juce::Colour(0xffff4b35));
@@ -13,7 +13,6 @@ SlipknotDrummerAudioProcessorEditor::SlipknotDrummerAudioProcessorEditor(Slipkno
     subtitle.setFont(juce::Font(juce::FontOptions(11.0f)));
     subtitle.setColour(juce::Label::textColourId, juce::Colour(0xffb5b5bd));
     addAndMakeVisible(subtitle);
-
     for (int i = 0; i < SlipknotDrummerAudioProcessor::slotCount; ++i)
     {
         auto& button = sampleButtons[static_cast<size_t>(i)];
@@ -23,24 +22,20 @@ SlipknotDrummerAudioProcessorEditor::SlipknotDrummerAudioProcessorEditor(Slipkno
         button.onClick = [this, i] { chooseSample(i); };
         addAndMakeVisible(button);
     }
-
     setupSlider(masterSlider, masterLabel, "MASTER");
     setupSlider(snareSlider, snareLabel, "SNARE HYBRID");
     setupSlider(roomSlider, roomLabel, "ROOM");
     setupSlider(pitchSlider, pitchLabel, "PITCH");
-
     auto& state = processor.getParameters();
     masterAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state, "master", masterSlider);
     snareAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state, "snareBlend", snareSlider);
     roomAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state, "room", roomSlider);
     pitchAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state, "pitch", pitchSlider);
-
     folderButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff76251f));
     folderButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
     folderButton.onClick = [] { juce::URL("https://github.com/bxrockrack-cmd/slipknot-/blob/main/SAMPLES.md").launchInDefaultBrowser(); };
     addAndMakeVisible(folderButton);
 }
-
 void SlipknotDrummerAudioProcessorEditor::setupSlider(juce::Slider& slider, juce::Label& label, const juce::String& name)
 {
     label.setText(name, juce::dontSendNotification);
@@ -57,7 +52,6 @@ void SlipknotDrummerAudioProcessorEditor::setupSlider(juce::Slider& slider, juce
     slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff202027));
     addAndMakeVisible(slider);
 }
-
 void SlipknotDrummerAudioProcessorEditor::chooseSample(int slot)
 {
     fileChooser.launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
@@ -72,7 +66,6 @@ void SlipknotDrummerAudioProcessorEditor::chooseSample(int slot)
             }
         });
 }
-
 void SlipknotDrummerAudioProcessorEditor::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colour(0xff111116));
@@ -91,7 +84,7 @@ void SlipknotDrummerAudioProcessorEditor::resized()
     const int left = 28, top = 105, gap = 9, w = 170, h = 76;
     for (int i = 0; i < SlipknotDrummerAudioProcessor::slotCount; ++i)
         sampleButtons[static_cast<size_t>(i)].setBounds(left + (i % 4) * (w + gap), top + (i / 4) * (h + gap), w, h);
-    const int knobTop = 410, knobWidth = 120, startX = 50;
+    const int knobTop = 475, knobWidth = 120, startX = 50;
     juce::Slider* sliders[] = { &masterSlider, &snareSlider, &roomSlider, &pitchSlider };
     juce::Label* labels[] = { &masterLabel, &snareLabel, &roomLabel, &pitchLabel };
     for (int i = 0; i < 4; ++i)
