@@ -45,13 +45,16 @@ bool SlipknotDrummerAudioProcessor::loadSample(int slot, const juce::File& file)
     if (reader == nullptr || reader->lengthInSamples <= 0 || reader->lengthInSamples > 30000000) return false;
     const int channels = juce::jlimit(1, 2, static_cast<int>(reader->numChannels));
     const int length = static_cast<int>(reader->lengthInSamples);
+    const double sourceRate = reader->sampleRate > 0.0 ? reader->sampleRate : currentSampleRate;
     auto audio = std::make_shared<juce::AudioBuffer<float>>(channels, length);
-    reader->read(audio.get(), 0, length, 0, true, channels > 1);
+    if (!reader->read(audio.get(), 0, length, 0, true, channels > 1)) return false;
     auto& target = slots[static_cast<size_t>(slot)];
     const int index = target.writeIndex.fetch_add(1, std::memory_order_relaxed) % 4;
     std::shared_ptr<const juce::AudioBuffer<float>> immutable = audio;
     std::atomic_store_explicit(&target.takes[static_cast<size_t>(index)], immutable, std::memory_order_release);
+    target.sampleRates[static_cast<size_t>(index)].store(sourceRate, std::memory_order_release);
     target.fileNames[index] = file.getFileName();
+    target.filePaths[index] = file.getFullPathName();
     return true;
 }
 juce::String SlipknotDrummerAudioProcessor::getSampleName(int slot) const
@@ -61,20 +64,34 @@ juce::String SlipknotDrummerAudioProcessor::getSampleName(int slot) const
     const int index = (target.writeIndex.load(std::memory_order_relaxed) - 1 + 4) % 4;
     return target.fileNames[index].isNotEmpty() ? target.fileNames[index] : "Load WAV";
 }
+bool SlipknotDrummerAudioProcessor::slotHasSample(int slot) const
+{
+    if (slot < 0 || slot >= slotCount) return false;
+    const auto& target = slots[static_cast<size_t>(slot)];
+    for (int i = 0; i < 4; ++i)
+        if (std::atomic_load_explicit(&target.takes[static_cast<size_t>(i)], std::memory_order_acquire)) return true;
+    return false;
+}
+
 void SlipknotDrummerAudioProcessor::triggerSlot(int slot, float velocity, int delay, float layerGain)
 {
     if (slot < 0 || slot >= slotCount || velocity <= 0.0f || layerGain <= 0.0001f) return;
     auto& target = slots[static_cast<size_t>(slot)];
     const int index = target.readIndex.fetch_add(1, std::memory_order_relaxed) % 4;
     auto sample = std::atomic_load_explicit(&target.takes[static_cast<size_t>(index)], std::memory_order_acquire);
+    int chosen = index;
     if (!sample)
         for (int i = 0; i < 4 && !sample; ++i)
+        {
             sample = std::atomic_load_explicit(&target.takes[static_cast<size_t>(i)], std::memory_order_acquire);
+            if (sample) chosen = i;
+        }
     if (!sample || sample->getNumSamples() == 0) return;
     auto& voice = voices[static_cast<size_t>(nextVoice++ % static_cast<int>(voices.size()))];
     voice.sample = std::move(sample);
     voice.position = 0.0;
-    voice.rate = 1.0;
+    const double sourceRate = target.sampleRates[static_cast<size_t>(chosen)].load(std::memory_order_acquire);
+    voice.rate = (sourceRate > 0.0 ? sourceRate : currentSampleRate) / currentSampleRate;
     voice.gain = velocity * layerGain;
     voice.delay = juce::jmax(0, delay);
     voice.active = true;
@@ -84,8 +101,14 @@ void SlipknotDrummerAudioProcessor::triggerNote(int note, float velocity, int de
     const float blend = parameters.getRawParameterValue("snareBlend")->load();
     if (note == 38)
     {
-        triggerSlot(1, velocity, delay, std::sqrt(1.0f - blend));
-        triggerSlot(2, velocity, delay, std::sqrt(blend));
+        const bool bright = slotHasSample(1), tight = slotHasSample(2);
+        if (bright && tight)
+        {
+            triggerSlot(1, velocity, delay, std::sqrt(1.0f - blend));
+            triggerSlot(2, velocity, delay, std::sqrt(blend));
+        }
+        else if (bright) triggerSlot(1, velocity, delay);
+        else if (tight) triggerSlot(2, velocity, delay);
         return;
     }
     if (note == 40) { triggerSlot(2, velocity, delay); return; }
@@ -162,16 +185,25 @@ juce::AudioProcessorEditor* SlipknotDrummerAudioProcessor::createEditor()
 void SlipknotDrummerAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     auto state = parameters.copyState();
-    for (int i = 0; i < slotCount; ++i)
-        state.setProperty("sample" + juce::String(i), getSampleName(i), nullptr);
+    for (int slot = 0; slot < slotCount; ++slot)
+        for (int take = 0; take < 4; ++take)
+            state.setProperty("samplePath_" + juce::String(slot) + "_" + juce::String(take), slots[static_cast<size_t>(slot)].filePaths[take], nullptr);
     std::unique_ptr<juce::XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
 }
 void SlipknotDrummerAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
     std::unique_ptr<juce::XmlElement> xml(getXmlFromBinary(data, sizeInBytes));
-    if (xml != nullptr && xml->hasTagName(parameters.state.getType()))
-        parameters.replaceState(juce::ValueTree::fromXml(*xml));
+    if (xml == nullptr || !xml->hasTagName(parameters.state.getType())) return;
+    auto state = juce::ValueTree::fromXml(*xml);
+    parameters.replaceState(state);
+    for (int slot = 0; slot < slotCount; ++slot)
+        for (int take = 0; take < 4; ++take)
+        {
+            const auto path = state.getProperty("samplePath_" + juce::String(slot) + "_" + juce::String(take)).toString();
+            const juce::File file(path);
+            if (file.existsAsFile()) loadSample(slot, file);
+        }
 }
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
