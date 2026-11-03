@@ -48,10 +48,14 @@ private:
         double position = 0.0;
         double rate = 1.0;
         float gain = 0.0f;
+        float gainTarget = 0.0f;
+        float gainStep = 0.0f;
+        int slot = -1;
         int delay = 0;
         bool active = false;
     };
     bool slotHasSample(int slot) const;
+    void chokeSlot(int slot, int delay);
     void triggerSlot(int slot, float velocity, int delay, float layerGain = 1.0f);
     void triggerNote(int note, float velocity, int delay);
     void renderVoices(juce::AudioBuffer<float>& buffer);
