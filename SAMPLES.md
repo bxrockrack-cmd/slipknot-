@@ -1,22 +1,27 @@
 # Free sample sources
 
-The instrument ships without third-party audio files. This keeps the repository lightweight and avoids redistributing sounds without clear permission.
+The project does not bundle third-party WAV files. This avoids redistributing large sample libraries without preserving their complete provenance. Check the license file included with each download.
 
-Use original recordings or samples whose individual license explicitly permits reuse in commercial music. Good places to look:
+## Recommended acoustic source: Virtuosity Drums (CC0)
 
-- [Freesound](https://freesound.org/) — filter each download by **CC0**; do not assume every Freesound file is CC0.
-- [OpenGameArt audio](https://opengameart.org/art-search-advanced?keys=drum) — check the license shown on each asset page.
-- [Internet Archive](https://archive.org/) — verify the rights statement for each recording before using it.
+- [GitHub source library](https://github.com/sfzinstruments/virtuosity_drums)
+- [Official product page](https://versilian-studios.com/virtuosity-drums/)
+- Contemporary acoustic kit recorded with a live drummer; includes multiple snare articulations, kick, toms, hats, ride and crashes.
+- CC0 1.0; approximately 1.1 GB. This is a natural, dynamic acoustic foundation; use the plugin's pitch and room controls and your DAW's distortion/EQ to push it toward aggressive metal.
+
+## Additional CC0 sources
+
+- [Big Rusty Drums](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/) — CC0 acoustic kit with a rougher character.
+- [Frankensnare](https://github.com/sfzinstruments/karoryfer.frankensnare/) — CC0 snare collection for building the Bright/Tight pair.
+- [Freesound](https://freesound.org/) — filter each download by CC0; do not assume every file is CC0.
 
 ## Loading sounds
 
-1. Download WAV files (44.1 or 48 kHz, mono or stereo).
-2. In Slipknot Drummer, click the instrument tile and choose a WAV file.
-3. Load up to four different takes into the same tile over time for round-robin variation. The most recently loaded take is displayed.
-4. MIDI notes follow the General MIDI drum map listed in the README.
+1. Download and unpack a sample library.
+2. In Slipknot Drummer, click an instrument tile and choose a WAV file.
+3. Load up to four different takes into the same tile for round-robin variation.
+4. For the hybrid snare, load a bright, ringing snare into Snare Bright and a short, punchy snare into Snare Tight. MIDI note 38 blends the two; note 40 triggers Tight only.
 
-## Snare hybrid
+The plugin stores sample file paths in the DAW project state. Keep the library in the same location so it can be found when reopening the project.
 
-MIDI note 38 triggers both **Snare Bright** and **Snare Tight**. The SNARE HYBRID knob crossfades between the two sample slots. Load one bright, metallic snare into the Bright tile and one short, punchy snare into the Tight tile.
-
-This project does not bundle Slipknot recordings or claim to reproduce any band's proprietary drum sound.
+No Slipknot recordings or other band's proprietary recordings are included.
