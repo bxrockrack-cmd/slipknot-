@@ -104,9 +104,9 @@ void SlipknotDrummerAudioProcessor::chokeSlot(int slot, int delay)
 {
     const int fadeSamples = juce::jmax(1, static_cast<int>(currentSampleRate * 0.004));
     for (auto& voice : voices)
-        if (voice.active && voice.slot == slot)
+        if (voice.active && voice.slot == slot && voice.delay <= delay)
         {
-            voice.chokeDelay = juce::jmax(0, delay);
+            voice.chokeDelay = juce::jmax(0, delay - voice.delay);
             voice.gainTarget = 0.0f;
             voice.gainStep = 0.0f;
         }
