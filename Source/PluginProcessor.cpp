@@ -93,11 +93,27 @@ void SlipknotDrummerAudioProcessor::triggerSlot(int slot, float velocity, int de
     const double sourceRate = target.sampleRates[static_cast<size_t>(chosen)].load(std::memory_order_acquire);
     voice.rate = (sourceRate > 0.0 ? sourceRate : currentSampleRate) / currentSampleRate;
     voice.gain = velocity * layerGain;
+    voice.gainTarget = voice.gain;
+    voice.gainStep = 0.0f;
+    voice.slot = slot;
     voice.delay = juce::jmax(0, delay);
     voice.active = true;
 }
+void SlipknotDrummerAudioProcessor::chokeSlot(int slot, int delay)
+{
+    const int fadeSamples = juce::jmax(1, static_cast<int>(currentSampleRate * 0.004));
+    for (auto& voice : voices)
+        if (voice.active && voice.slot == slot)
+        {
+            voice.delay = juce::jmax(0, delay);
+            voice.gainTarget = 0.0f;
+            voice.gainStep = -voice.gain / static_cast<float>(fadeSamples);
+        }
+}
+
 void SlipknotDrummerAudioProcessor::triggerNote(int note, float velocity, int delay)
 {
+    if (note == 42) chokeSlot(8, delay); // Closed hat chokes the open hat.
     const float blend = parameters.getRawParameterValue("snareBlend")->load();
     if (note == 38)
     {
@@ -134,7 +150,18 @@ void SlipknotDrummerAudioProcessor::renderVoices(juce::AudioBuffer<float>& buffe
             if (voice.delay > 0) { --voice.delay; continue; }
             const int length = voice.sample->getNumSamples();
             const int index = static_cast<int>(voice.position);
-            if (index >= length) { voice.active = false; voice.sample.reset(); continue; }
+            if (index >= length) { voice.active = false; continue; }
+            if (voice.gainStep != 0.0f)
+            {
+                voice.gain += voice.gainStep;
+                if ((voice.gainStep < 0.0f && voice.gain <= voice.gainTarget) ||
+                    (voice.gainStep > 0.0f && voice.gain >= voice.gainTarget))
+                {
+                    voice.gain = voice.gainTarget;
+                    voice.gainStep = 0.0f;
+                    if (voice.gainTarget <= 0.0f) { voice.active = false; continue; }
+                }
+            }
             const int next = juce::jmin(index + 1, length - 1);
             const float fraction = static_cast<float>(voice.position - index);
             const float l0 = voice.sample->getSample(0, index);
