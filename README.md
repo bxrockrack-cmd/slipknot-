@@ -11,7 +11,7 @@ A JUCE-based VST3 drum sampler focused on aggressive, live-feeling Nu-Metal drum
 - Master, snare blend, room reverb and global pitch controls.
 - Stereo output, velocity response and one-shot playback.
 
-The plugin is silent until WAV samples are loaded. See [SAMPLES.md](SAMPLES.md) for free/CC0 sourcing and setup notes.
+The plugin is silent until WAV samples are loaded. See [SAMPLES.md](SAMPLES.md) for free/CC0 sourcing and setup notes. Closed hi-hat MIDI note 42 now chokes the open hi-hat with a short fade to avoid an abrupt click. The editor also displays samples restored from a saved DAW project.
 
 ## General MIDI note map
 
@@ -39,7 +39,7 @@ CMake 3.22+ and a C++17 toolchain are required. JUCE 8.0.12 is fetched automatic
     cmake -B build -DCMAKE_BUILD_TYPE=Release
     cmake --build build --config Release --parallel
 
-GitHub Actions builds VST3 packages for Windows, macOS and Linux. Download the Windows artifact from the latest successful [Actions run](https://github.com/bxrockrack-cmd/slipknot-/actions).
+GitHub Actions currently targets Windows x64 VST3. Download the artifact from a successful [Actions run](https://github.com/bxrockrack-cmd/slipknot-/actions).
 
 ## Notes
 
