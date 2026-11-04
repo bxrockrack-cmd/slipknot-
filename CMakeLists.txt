@@ -8,7 +8,7 @@ FetchContent_Declare(JUCE
     GIT_SHALLOW TRUE)
 FetchContent_MakeAvailable(JUCE)
 
-juce_add_plugin(SlipknotDrummer)juce_generate_juce_header(SlipknotDrummer)
+juce_add_plugin(SlipknotDrummer
     COMPANY_NAME "BX Rock Rack"
     BUNDLE_ID "com.bxrockrack.slipknotdrummer"
     PLUGIN_MANUFACTURER_CODE Bxrk
@@ -42,3 +42,6 @@ target_link_libraries(SlipknotDrummer PRIVATE
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags)
+
+# Создаёт JuceHeader.h. Вызывать только после target_link_libraries.
+juce_generate_juce_header(SlipknotDrummer)
