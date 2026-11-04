@@ -8,7 +8,7 @@ FetchContent_Declare(JUCE
     GIT_SHALLOW TRUE)
 FetchContent_MakeAvailable(JUCE)
 
-juce_add_plugin(SlipknotDrummer
+juce_add_plugin(SlipknotDrummer)juce_generate_juce_header(SlipknotDrummer)
     COMPANY_NAME "BX Rock Rack"
     BUNDLE_ID "com.bxrockrack.slipknotdrummer"
     PLUGIN_MANUFACTURER_CODE Bxrk
